@@ -80,6 +80,16 @@ for (const agency of agencies) {
             data-cities={(agency.cities || []).map(c => c.slug.current).join(',')}
           >
             <a href={agency.website} target="_blank" rel="noopener">
+              {agency.imageUrl && (
+                <div class="agency-thumb">
+                  <img
+                    src={agency.imageUrl}
+                    alt={agency.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              )}
               <h2 class="agency-name">{agency.name}</h2>
               <div class="agency-meta">
                 {(agency.categories || []).map((cat) => (
@@ -299,12 +309,41 @@ for (const agency of agencies) {
   }
 
   .agency-card a {
-    display: block;
-    padding: 1.25rem;
-    min-height: 120px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 120px;
+  }
+
+  .agency-thumb {
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    overflow: hidden;
+    background: var(--grey-100);
+  }
+
+  .agency-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .agency-card a > h2,
+  .agency-card a > .agency-meta {
+    padding: 0 1.25rem;
+  }
+
+  .agency-card a > h2 {
+    padding-top: 1rem;
+  }
+
+  .agency-card a > .agency-meta {
+    padding-bottom: 1.25rem;
+  }
+
+  .agency-card a:not(:has(.agency-thumb)) {
+    padding: 1.25rem;
   }
 
   .agency-name {
@@ -338,12 +377,21 @@ for (const agency of agencies) {
     grid-template-columns: 1fr;
   }
 
+  .agency-grid.list-view .agency-thumb {
+    display: none;
+  }
+
   .agency-grid.list-view .agency-card a {
     flex-direction: row;
     align-items: center;
     min-height: auto;
     padding: 0.875rem 1.25rem;
     gap: 1rem;
+  }
+
+  .agency-grid.list-view .agency-card a > h2,
+  .agency-grid.list-view .agency-card a > .agency-meta {
+    padding: 0;
   }
 
   .agency-grid.list-view .agency-name {
