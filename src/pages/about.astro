@@ -1,0 +1,90 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Относно Проекта - BDA">
+  <section class="about">
+    <div class="container">
+      <h1>Относно Проекта</h1>
+      <div class="content">
+        <p>
+          "Български Дизайн Агенции" е проект, създаден с цел да обедини и подкрепи
+          българската дизайнерска общност.
+        </p>
+        <p>
+          BDA събира на едно място внимателно подбрани агенции от различни сфери на
+          дизайна, за да помогне на нови дизайнери да намерят първата си работа и на
+          утвърдени професионалисти да открият нови общности и партньори.
+        </p>
+        <p>
+          Мисията ни е да създадем пространство, в което талантът и креативността се
+          насърчават, като предоставяме на дизайнерите лесен достъп до информация за
+          агенциите в България.
+        </p>
+        <p>
+          Чрез този проект се стремим да изградим по-силна и свързана дизайнерска
+          общност, която да расте и процъфтява заедно.
+        </p>
+        <p>
+          Проектът е дело на <strong>Йордан Стоянов</strong>, който качва цялото
+          съдържание на сайта ръчно.
+        </p>
+        <p>
+          Можете да се свържете с мен на:
+          <a href="mailto:yordan@stoyanov.works">yordan@stoyanov.works</a>
+        </p>
+        <p class="thanks">Благодарим ви за подкрепата!</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .about {
+    padding: 3rem 0;
+  }
+
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 2rem;
+  }
+
+  .content {
+    max-width: 600px;
+  }
+
+  .content p {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--grey-700);
+    margin-bottom: 1rem;
+  }
+
+  .content a {
+    color: var(--black);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .content a:hover {
+    opacity: 0.6;
+  }
+
+  .content strong {
+    color: var(--black);
+  }
+
+  .thanks {
+    margin-top: 1.5rem;
+    font-weight: 500;
+    color: var(--black) !important;
+  }
+</style>

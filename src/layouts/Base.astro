@@ -1,0 +1,190 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'Български Дизайн Агенции' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content="Списък с дизайн агенциите в България. Собственоръчно събираме и категоризираме агенциите." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style is:global>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --black: #000;
+      --white: #fff;
+      --grey-100: #f5f5f5;
+      --grey-200: #e5e5e5;
+      --grey-300: #d4d4d4;
+      --grey-500: #737373;
+      --grey-700: #404040;
+      --grey-900: #171717;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --max-width: 1200px;
+      --gap: 1rem;
+    }
+
+    html {
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    main {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a href="/" class="logo">BDA</a>
+      <nav>
+        <a href="/about">Относно</a>
+        <a href="/submit">Предложи агенция</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <slot />
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo">BDA</span>
+        <p>Български Дизайн Агенции</p>
+        <p class="footer-sub">Платформата има за цел да обедини и подкрепи българската дизайн общност.</p>
+      </div>
+      <div class="footer-contact">
+        <p><strong>Yordan Stoyanov</strong></p>
+        <p>Web Design & Art Direction</p>
+        <a href="mailto:yordan@stoyanov.works">yordan@stoyanov.works</a>
+        <a href="https://stoyanov.works" target="_blank" rel="noopener">stoyanov.works</a>
+      </div>
+      <div class="footer-copy">
+        <p>&copy; 2026</p>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    .header {
+      border-bottom: 1px solid var(--grey-200);
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    nav {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    nav a:hover {
+      opacity: 0.6;
+    }
+
+    .footer {
+      border-top: 1px solid var(--grey-200);
+      margin-top: 4rem;
+      padding: 2rem 0;
+    }
+
+    .footer-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-brand .logo {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .footer-brand p {
+      font-size: 0.8125rem;
+      color: var(--grey-500);
+    }
+
+    .footer-sub {
+      margin-top: 0.25rem;
+      max-width: 280px;
+    }
+
+    .footer-contact {
+      font-size: 0.8125rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .footer-contact a {
+      color: var(--grey-500);
+    }
+
+    .footer-contact a:hover {
+      color: var(--black);
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--grey-500);
+    }
+
+    @media (max-width: 640px) {
+      .footer-inner {
+        flex-direction: column;
+      }
+    }
+  </style>
+</body>
+</html>
