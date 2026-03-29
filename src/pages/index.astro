@@ -80,10 +80,10 @@ for (const agency of agencies) {
             data-cities={(agency.cities || []).map(c => c.slug.current).join(',')}
           >
             <a href={agency.website} target="_blank" rel="noopener">
-              {agency.imageUrl && (
+              {(agency.image?.asset?.url || agency.imageUrl) && (
                 <div class="agency-thumb">
                   <img
-                    src={agency.imageUrl}
+                    src={agency.image?.asset?.url || agency.imageUrl}
                     alt={agency.name}
                     loading="lazy"
                     decoding="async"

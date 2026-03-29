@@ -28,6 +28,7 @@ export interface Agency {
   cities: City[];
   description?: string;
   imageUrl?: string;
+  image?: { asset: { url: string } };
 }
 
 export async function getAgencies(): Promise<Agency[]> {
@@ -40,7 +41,8 @@ export async function getAgencies(): Promise<Agency[]> {
       "categories": categories[]->{ _id, name, slug },
       "cities": cities[]->{ _id, name, slug },
       description,
-      imageUrl
+      imageUrl,
+      image{ asset->{ url } }
     }
   `);
 }
