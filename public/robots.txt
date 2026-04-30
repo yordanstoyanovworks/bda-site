@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bda.stoyanov.works/sitemap-index.xml
+Host: https://bda.stoyanov.works
