@@ -21,9 +21,17 @@ Don't propose alternatives unless asked.
 ## Common commands
 
 ```bash
+# Site (Astro)
 npm run dev       # astro dev — local server on :4321
 npm run build     # astro build — writes ./dist
 npm run preview   # astro preview — serve built output
+
+# Studio (Sanity v5 — visual CMS, in studio/)
+cd studio && npm install                 # first time on a fresh checkout
+cd studio && npm run dev                 # local studio at :3333
+cd studio && npx sanity login            # browser OAuth (provider: google)
+cd studio && npx sanity deploy           # redeploy to bda-studio.sanity.studio
+                                         # (--url bda-studio if hostname unset)
 
 # One-off image migration (already run; keep around for reference)
 SANITY_TOKEN=skXXX node scripts/migrate-images.mjs
@@ -41,6 +49,10 @@ No lint, no test, no format scripts configured.
 │   └── migrate-images.mjs # one-shot script: old Sanity CDN → native image assets
 ├── data/
 │   └── agencies-export.json  # raw export from old BDA site (reference data)
+├── studio/                # Sanity Studio v5 — visual CMS, deployed separately to sanity.studio
+│   ├── sanity.config.ts   # workspace config (project dq09sslz, dataset production)
+│   ├── sanity.cli.ts      # CLI config (pinned appId f29rstgk2wj4wv88zfb9dd3s)
+│   └── schemaTypes/       # agency, category, city
 ├── public/
 │   └── robots.txt         # allows all, points at sitemap-index.xml
 └── src/
@@ -97,6 +109,35 @@ Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`;
 - Default meta description in `Base.astro` is fixed Bulgarian copy — pages don't override it yet (TBD if per-page descriptions are wanted — confirm with Yordan).
 - JSON-LD `ItemList` of agencies is emitted from `index.astro` body (one `Organization` per agency, with `logo`/`description` only when present). No structured data on other pages.
 
+## Content workflow
+
+How content updates ship to production:
+
+1. Yordan edits an agency/category/city at https://bda-studio.sanity.studio and clicks **Publish**.
+2. Sanity webhook (configured in Manage → API → Webhooks) POSTs to a Vercel deploy hook.
+3. Vercel rebuilds `bda-site` from the latest `main` and deploys the new static output.
+4. `bda.stoyanov.works` reflects the change within ~30 seconds.
+
+If a content edit doesn't show up:
+- Check Sanity webhook delivery log (same Manage → API → Webhooks page).
+- Check Vercel deployments — the auto-fired one is labeled "Deploy Hook".
+- Drafts don't trigger webhooks (by design); only published changes do.
+
+## Maintenance
+
+The site is fully static and effectively zero-maintenance. Things that genuinely require periodic attention:
+
+- **Annual:** renew `stoyanov.works` domain registration at Namecheap. If the apex expires, the `bda.` subdomain dies with it.
+- **Watch for Sanity free-tier quotas** if traffic spikes: 100K API requests/month, 5 GB asset storage, 10 GB bandwidth/month. Current usage is well under.
+
+Things that do *not* need manual upkeep:
+- SSL certs — Vercel auto-renews.
+- Vercel free tier — no expiry.
+- The Sanity dataset — persists indefinitely on the free plan as long as the project isn't deleted.
+- Footer year — computed from `new Date()`, never goes stale.
+
+If the site is left untouched for months, it keeps serving the last build with no degradation. The only "decay" is content getting stale because new agencies aren't being added — that's a content choice, not a maintenance failure.
+
 ## Reference
 
 - **Production:** https://bda.stoyanov.works
@@ -109,7 +150,15 @@ Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`;
 
 ## Up next
 
-_(populate with current priorities)_
+Open improvement items, ordered by impact (audited 2026-05-01, after the UX/a11y/SEO batch shipped in `9b3b63f`):
+
+1. **Image performance.** Sanity image URLs are emitted raw — full-resolution originals (some 3000+px wide) downloaded for ~280px thumbs. Add `?w=560&auto=format&fit=max` query params at the GROQ/template layer.
+2. **Image dimensions on `<img>`.** Sanity asset has `metadata.dimensions.width`/`height` — query and emit to kill CLS.
+3. **Submit form is a no-op.** [src/pages/submit.astro](src/pages/submit.astro) only does `console.log`. Wire to Resend / Formspree / Sanity write API.
+4. **Remove legacy `imageUrl` fallback.** Sanity audit on 2026-05-01 confirmed 0/81 docs use it — safe to delete from `Agency` interface, GROQ query, and template.
+5. **Per-page meta description + OG/Twitter card.** Currently every page shares one Bulgarian description; sharing a URL produces a blank preview.
+6. **Agency detail pages.** `/agency/[slug]` doesn't exist — `description` field is never rendered, slug is unused, and there's no indexable content per agency.
+7. **17 agencies have no image.** They render as inconsistent text-only cards in the grid; either require an image at the schema level or design a deliberate no-image card state.
 
 ## Known traps
 
