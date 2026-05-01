@@ -4,7 +4,7 @@
  * Updates each agency document to use the native Sanity image asset instead of external URL.
  *
  * Run from the bda-site folder:
- *   node migrate-images.mjs
+ *   SANITY_TOKEN=skXXX node scripts/migrate-images.mjs
  */
 
 import { createClient } from "@sanity/client";

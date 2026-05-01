@@ -26,7 +26,7 @@ npm run build     # astro build — writes ./dist
 npm run preview   # astro preview — serve built output
 
 # One-off image migration (already run; keep around for reference)
-SANITY_TOKEN=skXXX node migrate-images.mjs
+SANITY_TOKEN=skXXX node scripts/migrate-images.mjs
 ```
 
 No lint, no test, no format scripts configured.
@@ -37,9 +37,10 @@ No lint, no test, no format scripts configured.
 .
 ├── astro.config.mjs       # site URL, vercel adapter, sitemap integration
 ├── tsconfig.json          # extends astro/tsconfigs/strict
-├── migrate-images.mjs     # one-shot script: old Sanity CDN → native image assets
+├── scripts/
+│   └── migrate-images.mjs # one-shot script: old Sanity CDN → native image assets
 ├── data/
-│   └── agencies-export.json  # raw export from old BDA site (untracked, reference data)
+│   └── agencies-export.json  # raw export from old BDA site (reference data)
 ├── public/
 │   └── robots.txt         # allows all, points at sitemap-index.xml
 └── src/
@@ -48,9 +49,10 @@ No lint, no test, no format scripts configured.
     ├── lib/
     │   └── sanity.ts      # client + GROQ queries (getAgencies/getCategories/getCities)
     ├── pages/
-    │   ├── index.astro    # directory: filters by category/city, grid/list view toggle
+    │   ├── index.astro    # directory: filters by category/city, grid/list view toggle, JSON-LD
     │   ├── about.astro    # static copy
-    │   └── submit.astro   # form (front-end only — submits to console.log)
+    │   ├── submit.astro   # form (front-end only — submits to console.log)
+    │   └── 404.astro      # branded not-found page
     └── components/        # currently empty — extract here when a pattern repeats
 ```
 
@@ -67,10 +69,8 @@ Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`;
 | `--grey-300`      | `#d4d4d4`                                          | input borders, outlined tags   |
 | `--grey-500`      | `#737373`                                          | muted text, footer copy        |
 | `--grey-700`      | `#404040`                                          | body copy on light bg          |
-| `--grey-900`      | `#171717`                                          | (defined, currently unused)    |
 | `--font`          | `'Inter', -apple-system, BlinkMacSystemFont, sans` | everything                     |
 | `--max-width`     | `1200px`                                           | container width                |
-| `--gap`           | `1rem`                                             | (defined, used ad-hoc)         |
 
 **Typography:** Inter via Google Fonts (weights 400, 500, 600, 700). Headings use `letter-spacing: -0.02em` to `-0.03em` and `clamp(1.75rem, 4vw, 2.5rem)` for h1.
 
@@ -95,7 +95,7 @@ Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`;
 - Per-page `<title>` set via `Base.astro` `title` prop.
 - Canonical URL is computed in `Base.astro` from `Astro.url.pathname` + `Astro.site`.
 - Default meta description in `Base.astro` is fixed Bulgarian copy — pages don't override it yet (TBD if per-page descriptions are wanted — confirm with Yordan).
-- No JSON-LD structured data yet.
+- JSON-LD `ItemList` of agencies is emitted from `index.astro` body (one `Organization` per agency, with `logo`/`description` only when present). No structured data on other pages.
 
 ## Reference
 
@@ -113,7 +113,8 @@ _(populate with current priorities)_
 ## Known traps
 
 - **The submit form doesn't submit anywhere.** `src/pages/submit.astro` `form.addEventListener` does `console.log(entries)` and shows a success message. No backend is wired up. Don't claim "submission works" until a real handler (Sanity write API, Formspree, Resend, etc.) is connected.
-- **Agency `imageUrl` is legacy.** It's still in the `Agency` interface and the index.astro renders `agency.image?.asset?.url || agency.imageUrl`. After confirming all docs were migrated, this fallback can be removed — but verify with a Sanity query first that no doc still has only `imageUrl`.
+- **Agency `imageUrl` is legacy.** Still in the `Agency` interface and the `index.astro` template falls back to it. As of 2026-05-01 a Sanity audit confirmed 0 of 81 agencies use `imageUrl` — the fallback is safe to remove (type, GROQ, template).
 - **`useCdn: true` means new Sanity content can lag a minute or two** before showing on the next build. Not a bug.
-- **No env file template.** `migrate-images.mjs` requires `SANITY_TOKEN` (Editor permissions) but the runtime client uses no token. Don't add a token to the runtime client unless writes from the site are intended.
-- **`data/` and `migrate-images.mjs` are currently untracked** (per `git status`). Decide whether to commit or `.gitignore` them — leaving them untracked indefinitely is the worst of both.
+- **No env file template.** `scripts/migrate-images.mjs` requires `SANITY_TOKEN` (Editor permissions) but the runtime client uses no token. Don't add a token to the runtime client unless writes from the site are intended.
+- **Sanity → Vercel deploy hook is not wired.** Adding an agency in Sanity does nothing until someone pushes; production is stale by default. Wire a Sanity webhook to a Vercel deploy hook to fix.
+- **Image URLs are raw `cdn.sanity.io` with no transform params.** Cards on the home page download originals (some thousands of pixels wide). Add `?w=560&auto=format&fit=max` at minimum when reading from `image.asset.url`.
