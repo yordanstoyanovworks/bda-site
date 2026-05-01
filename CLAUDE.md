@@ -102,7 +102,8 @@ Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`;
 - **Production:** https://bda.stoyanov.works
 - **Repo:** https://github.com/yordanstoyanovworks/bda-site
 - **Vercel project:** `bda-site` (id `prj_eRXA0M6r7wSShQJhYzPiLtjIh4k0`, team `yordans-projects-6ce72501`)
-- **Sanity Studio:** https://www.sanity.io/manage/project/dq09sslz
+- **Sanity Studio (visual CMS):** https://bda-studio.sanity.studio
+- **Sanity Manage (admin):** https://www.sanity.io/manage/project/dq09sslz
 - **DNS:** Namecheap (apex `stoyanov.works`), `bda` subdomain → A `76.76.21.21`
 - **Contact:** yordan@stoyanov.works
 
