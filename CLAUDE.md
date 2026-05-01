@@ -14,6 +14,7 @@ Don't propose alternatives unless asked.
 - **Package manager:** npm (lockfile committed)
 - **Node:** 24.x (per Vercel project)
 - **Styling:** plain CSS with `:root` custom properties — **no Tailwind, no CSS framework**
+- **Design system:** shared `gallery-system.css` from [stoyanov-works-website/shared-styles/](../stoyanov-works-website/shared-styles/), copied into `src/styles/` as a static drop. Source-of-truth lives in the other repo; updates are manual `cp`. Body type is **Telegraf** (self-hosted woff2 in `public/fonts/`)
 - **Components:** Astro `.astro` files only — no React/Vue/Svelte
 - **Hosting:** Vercel project `bda-site` (team `yordans-projects-6ce72501`)
 - **Domain:** `bda.stoyanov.works` (A record `76.76.21.21` in Namecheap)
@@ -65,26 +66,52 @@ No lint, no test, no format scripts configured.
     │   ├── about.astro    # static copy
     │   ├── submit.astro   # form (front-end only — submits to console.log)
     │   └── 404.astro      # branded not-found page
+    ├── styles/
+    │   └── gallery-system.css  # copied from stoyanov-works-website/shared-styles
     └── components/        # currently empty — extract here when a pattern repeats
+
+public/fonts/
+└── Telegraf-Regular.woff2   # copied from stoyanov-works-website/public/fonts
 ```
 
 ## Design tokens
 
-Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`; don't hard-code.
+Two layered sources:
+
+1. **`gallery-system.css`** (imported in `Base.astro` frontmatter) provides the shared semantic tokens: `--bg`, `--fg`, `--fg-dim`, `--fg-faint`, `--border`, `--font-sans`, `--font-mono`, `--label-sm/md/lg`. Defaults are dark-theme.
+2. **`Base.astro` `:root`** runs after and overrides for BDA's light theme + keeps the legacy named greys.
+
+Reference via `var(--token)` — don't hard-code colors or font stacks.
 
 | Token             | Value                                              | Usage                          |
 |-------------------|----------------------------------------------------|--------------------------------|
-| `--black`         | `#000`                                             | text, accents, active states   |
-| `--white`         | `#fff`                                             | page bg, cards                 |
-| `--grey-100`      | `#f5f5f5`                                          | hover bg, tag bg               |
-| `--grey-200`      | `#e5e5e5`                                          | borders, dividers              |
-| `--grey-300`      | `#d4d4d4`                                          | input borders, outlined tags   |
-| `--grey-500`      | `#737373`                                          | muted text, footer copy        |
-| `--grey-700`      | `#404040`                                          | body copy on light bg          |
-| `--font`          | `'Inter', -apple-system, BlinkMacSystemFont, sans` | everything                     |
+| `--bg`            | `#fff`                                             | page background                |
+| `--fg`            | `#000`                                             | primary text                   |
+| `--fg-dim`        | `rgba(0, 0, 0, 0.55)`                              | muted text (subtitles, meta)   |
+| `--fg-faint`      | `rgba(0, 0, 0, 0.25)`                              | very low-emphasis text         |
+| `--border`        | `rgba(0, 0, 0, 0.12)`                              | hairlines, list-view dividers  |
+| `--font-sans`     | `'Telegraf', ui-sans-serif, system-ui, …`          | body, headings, all type       |
+| `--font-mono`     | aliased to `var(--font-sans)`                      | utility classes that asked for mono now resolve to Telegraf |
+| `--black`         | `#000`                                             | active filter pill bg          |
+| `--white`         | `#fff`                                             | active filter pill text        |
+| `--grey-100`      | `#f5f5f5`                                          | filter-tag bg, search hover    |
+| `--grey-200`      | `#e5e5e5`                                          | view-toggle border             |
+| `--grey-300`      | `#d4d4d4`                                          | search input border, clear-btn border |
+| `--grey-500`      | `#737373`                                          | clear-btn text (legacy; prefer `--fg-dim`) |
+| `--grey-700`      | `#404040`                                          | clear-btn text default (legacy) |
+| `--font`          | `'Inter', -apple-system, …`                        | only form controls (search, clear, view-toggle, filter pills) still reference it. Body, headings, agency names, footer all use Telegraf via `--font-sans`. Plan: migrate the buttons to `--font-sans`, then drop both `--font` and the Inter `<link>`. |
 | `--max-width`     | `1200px`                                           | container width                |
 
-**Typography:** Inter via Google Fonts (weights 400, 500, 600, 700). Headings use `letter-spacing: -0.02em` to `-0.03em` and `clamp(1.75rem, 4vw, 2.5rem)` for h1.
+**Utility classes** (from `gallery-system.css`, available globally):
+
+- `.chrome` — uppercase, letter-spacing 0.08em, `var(--font-mono)` (= Telegraf in BDA), 11px
+- `.chrome.dim` / `.chrome.faint` — apply muted/faint foreground
+- `.label` — stacked label rows
+- `.num` — tabular figures, 9px, uppercase, dim — used for counts and numeric chrome
+- `.mono`, `.tabular` — single-purpose helpers
+- `.hairline`, `.hairline-t`, `.hairline-b` — 0.5px borders using `--border`
+
+**Typography:** Telegraf 400 self-hosted at `/fonts/Telegraf-Regular.woff2`. Headings use `letter-spacing: -0.02em` to `-0.035em`, h1 at `clamp(2rem, 5vw, 3.25rem)` weight 500.
 
 **Container pattern:** `max-width: var(--max-width); margin: 0 auto; padding: 0 1.5rem;` — repeat per section, not via a wrapper component.
 
@@ -95,6 +122,7 @@ Defined in `src/layouts/Base.astro` `:root`. Reference these via `var(--token)`;
 - **GROQ queries live in `src/lib/sanity.ts`** as exported async functions. Pages call them in frontmatter — don't fetch from inline scripts.
 - **Image source: native Sanity image assets.** Query via `image{ asset->{ url } }`. There is a legacy `imageUrl` fallback in `Agency` type and index.astro for safety, but new agencies should use `image` only — the migration in `migrate-images.mjs` already converted existing docs.
 - **Styling is scoped per `.astro` file.** Global tokens and reset live in `Base.astro` only. No Tailwind, no CSS modules, no PostCSS plugins.
+- **Shared design system.** `gallery-system.css` and `Telegraf-Regular.woff2` are **copies** from [stoyanov-works-website](../stoyanov-works-website/), not symlinks. To sync updates: re-`cp` from the source repo's `shared-styles/` and `public/fonts/`. Never edit `src/styles/gallery-system.css` here directly — your changes will be overwritten on next sync. Edit the source repo first.
 - **Interactivity is vanilla `<script>` blocks** at the bottom of `.astro` files (see filter/view-toggle logic in `index.astro`). No client framework. Don't introduce one for one-off DOM work.
 - **`src/components/` is empty by design** — extract a component only when a pattern repeats across pages, not preemptively.
 - **External agency links** open in new tab with `target="_blank" rel="noopener"`.
@@ -150,7 +178,7 @@ If the site is left untouched for months, it keeps serving the last build with n
 
 ## Up next
 
-Open improvement items, ordered by impact (audited 2026-05-01, after the UX/a11y/SEO batch shipped in `9b3b63f`):
+Open improvement items, ordered by impact (last audited 2026-05-01, after the design-system adoption batch):
 
 1. **Image performance.** Sanity image URLs are emitted raw — full-resolution originals (some 3000+px wide) downloaded for ~280px thumbs. Add `?w=560&auto=format&fit=max` query params at the GROQ/template layer.
 2. **Image dimensions on `<img>`.** Sanity asset has `metadata.dimensions.width`/`height` — query and emit to kill CLS.
@@ -158,7 +186,9 @@ Open improvement items, ordered by impact (audited 2026-05-01, after the UX/a11y
 4. **Remove legacy `imageUrl` fallback.** Sanity audit on 2026-05-01 confirmed 0/81 docs use it — safe to delete from `Agency` interface, GROQ query, and template.
 5. **Per-page meta description + OG/Twitter card.** Currently every page shares one Bulgarian description; sharing a URL produces a blank preview.
 6. **Agency detail pages.** `/agency/[slug]` doesn't exist — `description` field is never rendered, slug is unused, and there's no indexable content per agency.
-7. **17 agencies have no image.** They render as inconsistent text-only cards in the grid; either require an image at the schema level or design a deliberate no-image card state.
+7. **17 agencies have no image.** They now render as a bordered tile with the name in faint mono — placeholder treatment, not a final design. Decide whether to require an image at the schema level or invest in the empty-state card.
+8. **Subagents for adding new BDA entries.** Build Claude Code subagents that take an agency name + URL and handle the rest: scrape site for description, pull a logo/screenshot, classify into existing categories/cities, draft a Sanity document for review. Goal: drop friction so adding 10 agencies costs minutes, not an hour each.
+9. **Drop Inter, finish the Telegraf migration.** Form controls in `index.astro` (`.search-input`, `.clear-btn`, `.view-btn`, `.filter-tag`) still reference `var(--font)`. Swap them to `var(--font-sans)`, then remove the Inter `<link>` in `Base.astro` and the `--font` token. Saves a Google Fonts request per page.
 
 ## Known traps
 

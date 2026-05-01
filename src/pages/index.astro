@@ -22,6 +22,9 @@ for (const agency of agencies) {
   }
 }
 
+const visibleCategories = categories.filter((c) => (catCounts[c._id] || 0) > 0);
+const visibleCities = cities.filter((c) => (cityCounts[c._id] || 0) > 0);
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
@@ -49,7 +52,11 @@ const jsonLd = {
     <div class="container">
       <h1>Списък с дизайн агенциите в България.</h1>
       <p class="subtitle">Собственоръчно събираме и категоризираме агенциите в списъчен и каталожен вид.</p>
-      <p class="stats">{agencies.length} агенции, {categories.length} категории</p>
+      <p class="stats chrome dim">
+        <span class="num">{String(agencies.length).padStart(3, '0')}</span> агенции
+        <span class="sep">/</span>
+        <span class="num">{String(categories.length).padStart(2, '0')}</span> категории
+      </p>
     </div>
   </section>
 
@@ -73,67 +80,73 @@ const jsonLd = {
 
       <div class="filters">
         <div class="filter-group">
-          <h3>Филтрация по категория</h3>
+          <h3 class="chrome dim">Филтрация по категория</h3>
           <div class="filter-tags">
-            {categories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <button
                 class="filter-tag"
                 data-filter="category"
                 data-value={cat.slug.current}
               >
-                {cat.name} ({catCounts[cat._id] || 0})
+                {cat.name} <span class="num">{catCounts[cat._id] || 0}</span>
               </button>
             ))}
           </div>
         </div>
         <div class="filter-group">
-          <h3>Филтрация по град</h3>
+          <h3 class="chrome dim">Филтрация по град</h3>
           <div class="filter-tags">
-            {cities.map((city) => (
+            {visibleCities.map((city) => (
               <button
                 class="filter-tag"
                 data-filter="city"
                 data-value={city.slug.current}
               >
-                {city.name} ({cityCounts[city._id] || 0})
+                {city.name} <span class="num">{cityCounts[city._id] || 0}</span>
               </button>
             ))}
+            <button type="button" class="clear-btn" id="clear-btn" hidden>Изчисти филтрите</button>
           </div>
         </div>
-        <button type="button" class="clear-btn" id="clear-btn" hidden>Изчисти филтрите</button>
       </div>
 
       <div class="agency-grid" id="agency-grid">
-        {agencies.map((agency) => (
-          <article
-            class="agency-card"
-            data-categories={(agency.categories || []).map(c => c.slug.current).join(',')}
-            data-cities={(agency.cities || []).map(c => c.slug.current).join(',')}
-            data-name={agency.name.toLowerCase()}
-          >
-            <a href={agency.website} target="_blank" rel="noopener">
-              {(agency.image?.asset?.url || agency.imageUrl) && (
-                <div class="agency-thumb">
-                  <img
-                    src={agency.image?.asset?.url || agency.imageUrl}
-                    alt={agency.name}
-                    loading="lazy"
-                    decoding="async"
-                  />
+        {agencies.map((agency) => {
+          const imageUrl = agency.image?.asset?.url || agency.imageUrl;
+          const metaParts = [
+            ...(agency.categories || []).map((c) => c.name),
+            ...(agency.cities || []).map((c) => c.name),
+          ];
+          return (
+            <article
+              class="agency-card"
+              data-categories={(agency.categories || []).map(c => c.slug.current).join(',')}
+              data-cities={(agency.cities || []).map(c => c.slug.current).join(',')}
+              data-name={agency.name.toLowerCase()}
+            >
+              <a href={agency.website} target="_blank" rel="noopener">
+                <div class={`agency-thumb${imageUrl ? '' : ' agency-thumb--empty'}`}>
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={agency.name}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span class="agency-thumb-fallback chrome faint">{agency.name}</span>
+                  )}
                 </div>
-              )}
-              <h2 class="agency-name">{agency.name}</h2>
-              <div class="agency-meta">
-                {(agency.categories || []).map((cat) => (
-                  <span class="tag">{cat.name}</span>
-                ))}
-                {(agency.cities || []).map((city) => (
-                  <span class="tag tag-city">{city.name}</span>
-                ))}
-              </div>
-            </a>
-          </article>
-        ))}
+                <div class="agency-info">
+                  <h2 class="agency-name">{agency.name}</h2>
+                  {metaParts.length > 0 && (
+                    <p class="agency-meta">{metaParts.join(' · ')}</p>
+                  )}
+                </div>
+              </a>
+            </article>
+          );
+        })}
       </div>
 
       <p class="no-results" id="no-results" style="display: none;">
@@ -297,25 +310,30 @@ const jsonLd = {
   }
 
   h1 {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    max-width: 600px;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    max-width: 720px;
   }
 
   .subtitle {
-    margin-top: 0.75rem;
-    color: var(--grey-500);
-    font-size: 0.9375rem;
-    max-width: 500px;
+    margin-top: 1rem;
+    color: var(--fg-dim);
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 540px;
   }
 
   .stats {
-    margin-top: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--grey-500);
-    font-weight: 500;
+    margin-top: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stats .sep {
+    opacity: 0.5;
   }
 
   .directory {
@@ -354,8 +372,7 @@ const jsonLd = {
   }
 
   .clear-btn {
-    align-self: flex-start;
-    margin-top: 0.5rem;
+    margin-left: auto;
     font-family: var(--font);
     font-size: 0.8125rem;
     padding: 0.375rem 0.75rem;
@@ -408,12 +425,7 @@ const jsonLd = {
   }
 
   .filter-group h3 {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--grey-500);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.625rem;
   }
 
   .filter-tags {
@@ -443,36 +455,39 @@ const jsonLd = {
     border-color: var(--black);
   }
 
+  .filter-tag.active .num {
+    color: var(--white);
+  }
+
   .agency-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1px;
-    background: var(--grey-200);
-    border: 1px solid var(--grey-200);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2.5rem 1.5rem;
   }
 
-  .agency-card {
-    background: var(--white);
-    transition: background 0.15s;
+  @media (max-width: 1024px) {
+    .agency-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
-  .agency-card:hover,
-  .agency-card:focus-within {
-    background: var(--grey-100);
+  @media (max-width: 768px) {
+    .agency-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .agency-card a {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 120px;
+    display: block;
   }
 
   .agency-thumb {
     width: 100%;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
+    border-radius: 12px;
     background: var(--grey-100);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .agency-thumb img {
@@ -480,54 +495,58 @@ const jsonLd = {
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .agency-card a > h2,
-  .agency-card a > .agency-meta {
-    padding: 0 1.25rem;
-  }
-
-  .agency-card a > h2 {
-    padding-top: 1rem;
-  }
-
-  .agency-card a > .agency-meta {
-    padding-bottom: 1.25rem;
-  }
-
-  .agency-card a:not(:has(.agency-thumb)) {
+  .agency-thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 1.25rem;
+    border: 1px solid var(--border);
+    background: transparent;
+  }
+
+  .agency-thumb-fallback {
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .agency-card:hover .agency-thumb,
+  .agency-card:focus-within .agency-thumb {
+    transform: translateY(-3px);
+  }
+
+  .agency-card:hover .agency-thumb img,
+  .agency-card:focus-within .agency-thumb img {
+    transform: scale(1.03);
+  }
+
+  .agency-info {
+    margin-top: 0.875rem;
   }
 
   .agency-name {
     font-size: 1.0625rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--fg);
   }
 
   .agency-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-top: 0.75rem;
-  }
-
-  .tag {
-    font-size: 0.6875rem;
-    padding: 0.2rem 0.5rem;
-    background: var(--grey-100);
-    border-radius: 3px;
-    color: var(--grey-700);
-  }
-
-  .tag-city {
-    background: none;
-    border: 1px solid var(--grey-300);
+    margin-top: 0.25rem;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--fg-dim);
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   /* List view */
   .agency-grid.list-view {
     grid-template-columns: 1fr;
+    gap: 0;
   }
 
   .agency-grid.list-view .agency-thumb {
@@ -535,16 +554,21 @@ const jsonLd = {
   }
 
   .agency-grid.list-view .agency-card a {
+    display: flex;
     flex-direction: row;
-    align-items: center;
-    min-height: auto;
-    padding: 0.875rem 1.25rem;
-    gap: 1rem;
+    align-items: baseline;
+    gap: 1.25rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--border);
   }
 
-  .agency-grid.list-view .agency-card a > h2,
-  .agency-grid.list-view .agency-card a > .agency-meta {
-    padding: 0;
+  .agency-grid.list-view .agency-info {
+    margin-top: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+    flex: 1;
+    flex-wrap: wrap;
   }
 
   .agency-grid.list-view .agency-name {
@@ -557,7 +581,7 @@ const jsonLd = {
 
   .no-results {
     text-align: center;
-    color: var(--grey-500);
+    color: var(--fg-dim);
     padding: 3rem 0;
     font-size: 0.9375rem;
   }
