@@ -4,3 +4,5 @@ dist
 .vercel
 .env
 ys-stuff-human/
+.claude/
+.sanity/
