@@ -1,4 +1,6 @@
 ---
+import '../styles/gallery-system.css';
+
 interface Props {
   title?: string;
 }
@@ -35,6 +37,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
       --grey-700: #404040;
       --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --max-width: 1200px;
+      --bg: #fff;
+      --fg: #000;
     }
 
     :focus-visible {

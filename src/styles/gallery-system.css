@@ -1,0 +1,218 @@
+/* ============================================================
+ * stoyanov.works — gallery system
+ * ============================================================
+ * Source of truth: github.com/yordanstoyanovworks/stoyanov-works-website
+ *                  shared-styles/gallery-system.css
+ *
+ * Design tokens, fonts, and chrome utilities lifted from the
+ * /lab/interactive-gallery experiment. Packaged for reuse across
+ * projects (BDA, future tools).
+ *
+ * Type pairing:
+ *   Telegraf  → main type. Headings, body, brand surfaces.
+ *   Geist Mono → numbers, codes, indexes, small UI labels.
+ *
+ * To use in another project (e.g. BDA — Astro):
+ *   1. Copy this file into the project, e.g. src/styles/gallery-system.css
+ *   2. Copy /public/fonts/Telegraf-Regular.woff2 from
+ *      stoyanov-works-website into the project's /public/fonts/
+ *   3. Import this CSS once in the root layout / global stylesheet
+ *   4. Apply via the body selector (auto) or override per surface
+ *
+ * Notes:
+ * - Telegraf is self-hosted (woff2). Confirm your foundry license
+ *   covers the deploy domain.
+ * - Geist Mono pulls from jsdelivr (font-display: swap). If you'd
+ *   rather self-host, replace the URLs with local files.
+ * - All tokens live as CSS custom properties on :root. Override at
+ *   any subtree to swap palette / scale.
+ * ============================================================ */
+
+
+/* ------------------------------------------------------------
+ * Fonts
+ * ------------------------------------------------------------ */
+
+@font-face {
+  font-family: 'Telegraf';
+  src: url('/fonts/Telegraf-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/files/geist-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/files/geist-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+/* ------------------------------------------------------------
+ * Design tokens
+ * ------------------------------------------------------------ */
+
+:root {
+  /* Color — dark theme (matches /lab/interactive-gallery) */
+  --bg:        #0a0908;
+  --fg:        #f0ede4;
+  --fg-dim:    rgba(240, 237, 228, 0.55);
+  --fg-faint:  rgba(240, 237, 228, 0.25);
+  --border:    rgba(240, 237, 228, 0.15);
+
+  /* Type families */
+  --font-sans: 'Telegraf', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Chrome scale (mono — used for tiny UI labels, indexes) */
+  --label-sm:  9px;   /* poster meta, hairlines */
+  --label-md:  10px;  /* nav hints, progress dots */
+  --label-lg:  11px;  /* primary chrome, counters */
+}
+
+
+/* ------------------------------------------------------------
+ * Base
+ * ------------------------------------------------------------ */
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* ------------------------------------------------------------
+ * Chrome — small fixed UI labels (corners, counters, captions)
+ *
+ * Pair with positioning of your choice. Defaults to mono so
+ * counters and indexes feel grid-aligned.
+ * ------------------------------------------------------------ */
+
+.chrome {
+  font-family: var(--font-mono);
+  font-size: var(--label-lg);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.chrome.dim   { color: var(--fg-dim); }
+.chrome.faint { color: var(--fg-faint); }
+
+/* Use when chrome must sit over mixed-bright content and stay
+   max-contrast against any background (e.g. images). */
+.chrome.diff  { mix-blend-mode: difference; color: var(--fg); }
+
+
+/* Stacked label pairs (e.g. "Sofia, Bulgaria / 2026") */
+.label {
+  display: block;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+.label.dim { opacity: 0.5; }
+
+
+/* ------------------------------------------------------------
+ * Type helpers
+ * ------------------------------------------------------------ */
+
+.mono     { font-family: var(--font-mono); }
+.tabular  { font-variant-numeric: tabular-nums; }
+
+/* Numeric / index labels (e.g. "001 / 017", "142 agencies", "—") */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--label-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+
+/* ------------------------------------------------------------
+ * Hairlines — half-pixel borders on hover-capable displays
+ * ------------------------------------------------------------ */
+
+.hairline    { border: 0.5px solid var(--border); }
+.hairline-t  { border-top: 0.5px solid var(--border); }
+.hairline-b  { border-bottom: 0.5px solid var(--border); }
+
+
+/* ------------------------------------------------------------
+ * Custom cursor (optional)
+ *
+ * Drop the matching markup + JS from
+ *   /public/lab/interactive-gallery/index.html
+ *   (search "CUSTOM CURSOR")
+ * to enable. The CSS below covers idle (small dot) and expanded
+ * (labeled ring) states.
+ *
+ * Heads up: the @media block hides the native cursor on
+ * html, body, a, button. If your project has more interactive
+ * surfaces (inputs, custom controls), add them to that selector
+ * list — otherwise the OS cursor will leak through.
+ * ------------------------------------------------------------ */
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--fg);
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 10000;
+  mix-blend-mode: difference;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--label-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  will-change: transform;
+  opacity: 0;
+  transition:
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.3s ease,
+    opacity 0.25s ease;
+}
+.cursor.visible { opacity: 1; }
+.cursor-label {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  line-height: 1.35;
+  padding: 0 6px;
+}
+.cursor.expand {
+  width: 76px;
+  height: 76px;
+  background: transparent;
+  box-shadow: inset 0 0 0 0.5px var(--fg);
+}
+.cursor.expand .cursor-label { opacity: 1; }
+
+@media (hover: hover) and (pointer: fine) {
+  html, body, a, button { cursor: none; }
+  .cursor { display: flex; }
+}
