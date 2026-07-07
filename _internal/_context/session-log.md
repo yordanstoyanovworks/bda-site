@@ -4,7 +4,7 @@ Newest entries on top. Each session: what changed, why, what's next.
 
 ---
 
-## 2026-07-07 - Migrated off Dropbox to ~/Projects, restructured to client/ + _internal/ (NOT yet deployed)
+## 2026-07-07 - Migrated off Dropbox to ~/Projects, restructured to client/ + _internal/, deployed live
 
 **Focus:** Move this repo out of Dropbox into `~/Projects/bda-site` and reshape to the standard template, including the nested Sanity studio.
 
@@ -16,10 +16,9 @@ Newest entries on top. Each session: what changed, why, what's next.
 
 **Decisions:** Code in `client/`, nested studio stays inside `client/studio/`.
 
-**Next / open (RESUME HERE):** Not deployed yet — local `main` is 2 commits ahead of origin.
-    1. Set this project's **Vercel Root Directory → `client`** in the dashboard.
-    2. Push `main`; verify `bda.stoyanov.works` (200) and that the submit endpoint works (needs `SANITY_WRITE_TOKEN` already in Vercel env).
-    3. Retire the Dropbox original after sign-off.
+**Deployed:** Vercel Root Directory set to `client`, pushed `main`, production deploy green from the new structure. Verified `bda.stoyanov.works` / `/about` / `/submit` / sitemap all 200; homepage renders agency content. The Astro `output: 'server'` switch works (serverless function bundled). Dropbox original archived to `__archive/07_2026_bda-site`.
+
+**Next / open:** The new `/api/submit-agency` endpoint is POST-only (a browser GET returns a cosmetic 500 — Astro failing to render an error page for an unsupported method; no real user hits it that way). **Not yet functionally tested end-to-end** — submit the form once to confirm it writes to Sanity, which needs `SANITY_WRITE_TOKEN` set in the bda-site Vercel env. Known pre-existing tech debt still open: raw un-transformed Sanity image URLs (no `?w=`), Sanity→Vercel deploy hook not wired.
 
 ## 2026-05-07
 
