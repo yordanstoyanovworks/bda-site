@@ -2,22 +2,26 @@
 
 A static directory of Bulgarian design agencies (Български Дизайн Агенции). Sanity-backed content, Astro-rendered pages, deployed to Vercel.
 
+## Layout
+
+Standard `~/Projects` structure: **code in `client/`** (Astro app; Vercel Root Directory = `client`), with the nested Sanity **`client/studio/`** (deploys to Sanity separately via `sanity deploy`). **Docs in `_internal/`** (`_context/`). This file + `AGENTS.md` stay at the root.
+
 ## Context files
 
 Persistent memory across sessions. Read at the start of every session before starting work.
 
-- **`_context/session-log.md`** — what was done in recent sessions, decisions made, pickup point
-- **`_context/decisions.md`** — significant choices and their reasoning (ADR-lite)
-- **`_context/conventions.md`** — project quirks beyond this file
-- **`_context/open-questions.md`** — unresolved items currently being deliberated
+- **`_internal/_context/session-log.md`** — what was done in recent sessions, decisions made, pickup point
+- **`_internal/_context/decisions.md`** — significant choices and their reasoning (ADR-lite)
+- **`_internal/_context/conventions.md`** — project quirks beyond this file
+- **`_internal/_context/open-questions.md`** — unresolved items currently being deliberated
 
 When I ask you to update `CLAUDE.md`, also update the context files:
-1. Append entry to `_context/session-log.md` (newest on top) — what was done, decisions made, pickup point
-2. Add significant decisions to `_context/decisions.md`
-3. Update `_context/open-questions.md` — move resolved items out, add new ones
+1. Append entry to `_internal/_context/session-log.md` (newest on top) — what was done, decisions made, pickup point
+2. Add significant decisions to `_internal/_context/decisions.md`
+3. Update `_internal/_context/open-questions.md` — move resolved items out, add new ones
 4. Keep entries concise. No filler.
 
-If something belongs in `CLAUDE.md` (locked rule, stack decision, design token), put it there. If it's session-level history or evolving context, put it in `_context/`.
+If something belongs in `CLAUDE.md` (locked rule, stack decision, design token), put it there. If it's session-level history or evolving context, put it in `_internal/_context/`.
 
 ## Stack (locked)
 
@@ -136,7 +140,7 @@ Reference via `var(--token)` — don't hard-code colors or font stacks.
 
 ## Conventions
 
-- **Astro mixed (mostly static).** Pages set `export const prerender = true` and build to HTML at deploy time, fetching Sanity over CDN (`useCdn: true`). Only [`/api/submit-agency`](src/pages/api/submit-agency.ts) runs as a Vercel serverless function — needed to hold the Sanity write token server-side. To pick up new agency content, redeploy. To pick up form submissions, no redeploy needed (server endpoint reads `SANITY_WRITE_TOKEN` at request time).
+- **Astro mixed (mostly static).** Pages set `export const prerender = true` and build to HTML at deploy time, fetching Sanity over CDN (`useCdn: true`). Only [`/api/submit-agency`](client/src/pages/api/submit-agency.ts) runs as a Vercel serverless function — needed to hold the Sanity write token server-side. To pick up new agency content, redeploy. To pick up form submissions, no redeploy needed (server endpoint reads `SANITY_WRITE_TOKEN` at request time).
 - **Site language is Bulgarian (`<html lang="bg">`).** All UI copy is in Cyrillic. Don't translate to English without being asked.
 - **GROQ queries live in `src/lib/sanity.ts`** as exported async functions. Pages call them in frontmatter — don't fetch from inline scripts.
 - **Image source: native Sanity image assets.** Query via `image{ asset->{ url } }`. There is a legacy `imageUrl` fallback in `Agency` type and index.astro for safety, but new agencies should use `image` only — the migration in `migrate-images.mjs` already converted existing docs.
