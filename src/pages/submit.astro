@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 import Base from '../layouts/Base.astro';
 ---
 
@@ -8,31 +9,83 @@ import Base from '../layouts/Base.astro';
       <h1>Предложете дизайн агенция</h1>
       <p class="note">Запазвам правото си да не публикувам всички изпратени предложения.</p>
 
-      <form class="form" id="submit-form">
+      <form class="form" id="submit-form" novalidate>
         <div class="field">
           <label for="name">Име на агенцията</label>
-          <input type="text" id="name" name="name" placeholder="Въведете име..." required />
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Въведете име..."
+            required
+            maxlength="200"
+            autocomplete="organization"
+          />
+          <p class="error" data-error-for="name" hidden></p>
         </div>
+
         <div class="field">
           <label for="website">Линк към уебсайта</label>
-          <input type="url" id="website" name="website" placeholder="https://..." required />
+          <input
+            type="url"
+            id="website"
+            name="website"
+            placeholder="https://..."
+            required
+            autocomplete="url"
+          />
+          <p class="error" data-error-for="website" hidden></p>
         </div>
+
         <div class="field">
           <label for="services">Предлагани услуги</label>
-          <input type="text" id="services" name="services" placeholder="Напр. Брандинг, Уеб Дизайн..." />
+          <input
+            type="text"
+            id="services"
+            name="services"
+            placeholder="Напр. Брандинг, Уеб Дизайн..."
+            required
+            maxlength="500"
+          />
+          <p class="error" data-error-for="services" hidden></p>
         </div>
+
         <div class="field">
-          <label for="email">Ваш имейл за обратна връзка</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" />
+          <label for="city">Град</label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            placeholder="София, Варна..."
+            required
+            maxlength="100"
+            autocomplete="address-level2"
+          />
+          <p class="error" data-error-for="city" hidden></p>
         </div>
+
         <div class="field">
-          <label for="message">Обратна връзка</label>
-          <textarea id="message" name="message" placeholder="Всякаква обратна връзка е добре дошла!" rows="4"></textarea>
+          <label for="email">Имейл за обратна връзка <span class="optional">(незадължително)</span></label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+          <p class="error" data-error-for="email" hidden></p>
         </div>
+
+        <div class="hp" aria-hidden="true">
+          <label for="_gotcha">Не попълвайте това поле</label>
+          <input type="text" id="_gotcha" name="_gotcha" tabindex="-1" autocomplete="off" />
+        </div>
+
         <button type="submit" class="submit-btn">Изпрати</button>
+        <p class="form-error" id="form-error" hidden></p>
       </form>
 
-      <div class="success" id="success-msg" style="display: none;">
+      <div class="success" id="success-msg" hidden>
         <p>Благодаря за предложението! Ще го разгледам скоро.</p>
       </div>
     </div>
@@ -42,15 +95,69 @@ import Base from '../layouts/Base.astro';
 <script>
   const form = document.getElementById('submit-form') as HTMLFormElement;
   const success = document.getElementById('success-msg')!;
+  const formError = document.getElementById('form-error')!;
+  const submitBtn = form.querySelector<HTMLButtonElement>('.submit-btn')!;
 
-  form.addEventListener('submit', (e) => {
+  function clearErrors() {
+    document.querySelectorAll<HTMLElement>('[data-error-for]').forEach((el) => {
+      el.hidden = true;
+      el.textContent = '';
+    });
+    formError.hidden = true;
+    formError.textContent = '';
+  }
+
+  function showFieldError(field: string, msg: string) {
+    const el = document.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+    if (el) {
+      el.textContent = msg;
+      el.hidden = false;
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    // For now, just show success - can be connected to Sanity API or a form service later
-    const data = new FormData(form);
-    const entries = Object.fromEntries(data.entries());
-    console.log('Submission:', entries);
-    form.style.display = 'none';
-    success.style.display = '';
+    clearErrors();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Изпращане...';
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+
+    try {
+      const res = await fetch('/api/submit-agency', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        errors?: Record<string, string>;
+        error?: string;
+      };
+
+      if (data.ok) {
+        form.style.display = 'none';
+        success.hidden = false;
+        return;
+      }
+
+      if (data.errors) {
+        for (const [field, msg] of Object.entries(data.errors)) {
+          showFieldError(field, msg);
+        }
+        const firstField = Object.keys(data.errors)[0];
+        document.getElementById(firstField)?.focus();
+      } else {
+        formError.textContent = data.error || 'Възникна грешка. Моля опитайте отново.';
+        formError.hidden = false;
+      }
+    } catch {
+      formError.textContent = 'Грешка в мрежата. Моля опитайте отново.';
+      formError.hidden = false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Изпрати';
+    }
   });
 </script>
 
@@ -66,15 +173,16 @@ import Base from '../layouts/Base.astro';
   }
 
   h1 {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
   }
 
   .note {
-    margin-top: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--grey-500);
+    margin-top: 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--fg-dim);
     margin-bottom: 2rem;
   }
 
@@ -93,32 +201,48 @@ import Base from '../layouts/Base.astro';
 
   label {
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 500;
   }
 
-  input, textarea {
-    font-family: var(--font);
-    font-size: 0.875rem;
+  .optional {
+    color: var(--fg-dim);
+    font-weight: 400;
+  }
+
+  input,
+  textarea {
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
     padding: 0.625rem 0.75rem;
     border: 1px solid var(--grey-300);
     border-radius: 6px;
     background: var(--white);
     transition: border-color 0.15s;
     outline: none;
+    color: var(--fg);
   }
 
-  input:focus, textarea:focus {
+  input:focus,
+  textarea:focus {
     border-color: var(--black);
   }
 
-  textarea {
-    resize: vertical;
+  .error {
+    font-size: 0.8125rem;
+    color: #c0392b;
+    margin: 0;
+  }
+
+  .form-error {
+    font-size: 0.875rem;
+    color: #c0392b;
+    margin: 0;
   }
 
   .submit-btn {
-    font-family: var(--font);
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 500;
     padding: 0.75rem 1.5rem;
     background: var(--black);
     color: var(--white);
@@ -129,13 +253,27 @@ import Base from '../layouts/Base.astro';
     align-self: flex-start;
   }
 
-  .submit-btn:hover {
-    opacity: 0.8;
+  .submit-btn:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .success p {
     font-size: 0.9375rem;
-    color: var(--grey-700);
+    color: var(--fg);
     padding: 2rem 0;
+  }
+
+  .hp {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 </style>

@@ -4,7 +4,9 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://bda.stoyanov.works',
-  output: 'static',
+  // Mostly static; pages opt in via `export const prerender = true`.
+  // The /api/submit-agency endpoint runs as a Vercel serverless function.
+  output: 'server',
   adapter: vercel(),
   integrations: [sitemap()],
 });

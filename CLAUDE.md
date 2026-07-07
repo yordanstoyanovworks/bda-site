@@ -2,11 +2,28 @@
 
 A static directory of Bulgarian design agencies (Български Дизайн Агенции). Sanity-backed content, Astro-rendered pages, deployed to Vercel.
 
+## Context files
+
+Persistent memory across sessions. Read at the start of every session before starting work.
+
+- **`_context/session-log.md`** — what was done in recent sessions, decisions made, pickup point
+- **`_context/decisions.md`** — significant choices and their reasoning (ADR-lite)
+- **`_context/conventions.md`** — project quirks beyond this file
+- **`_context/open-questions.md`** — unresolved items currently being deliberated
+
+When I ask you to update `CLAUDE.md`, also update the context files:
+1. Append entry to `_context/session-log.md` (newest on top) — what was done, decisions made, pickup point
+2. Add significant decisions to `_context/decisions.md`
+3. Update `_context/open-questions.md` — move resolved items out, add new ones
+4. Keep entries concise. No filler.
+
+If something belongs in `CLAUDE.md` (locked rule, stack decision, design token), put it there. If it's session-level history or evolving context, put it in `_context/`.
+
 ## Stack (locked)
 
 Don't propose alternatives unless asked.
 
-- **Framework:** Astro `^5.0.0` — `output: 'static'`
+- **Framework:** Astro `^5.0.0` — `output: 'server'` with per-page `export const prerender = true` (mostly static, one server endpoint)
 - **Adapter:** `@astrojs/vercel` `^8.0.0`
 - **CMS:** Sanity (`@sanity/client` `^7.0.0`) — project `dq09sslz`, dataset `production`, apiVersion `2024-01-01`, `useCdn: true`
 - **Sitemap:** `@astrojs/sitemap` `^3.7.2`
@@ -53,7 +70,7 @@ No lint, no test, no format scripts configured.
 ├── studio/                # Sanity Studio v5 — visual CMS, deployed separately to sanity.studio
 │   ├── sanity.config.ts   # workspace config (project dq09sslz, dataset production)
 │   ├── sanity.cli.ts      # CLI config (pinned appId f29rstgk2wj4wv88zfb9dd3s)
-│   └── schemaTypes/       # agency, category, city
+│   └── schemaTypes/       # agency, category, city, submission
 ├── public/
 │   └── robots.txt         # allows all, points at sitemap-index.xml
 └── src/
@@ -64,7 +81,9 @@ No lint, no test, no format scripts configured.
     ├── pages/
     │   ├── index.astro    # directory: filters by category/city, grid/list view toggle, JSON-LD
     │   ├── about.astro    # static copy
-    │   ├── submit.astro   # form (front-end only — submits to console.log)
+    │   ├── submit.astro   # agency submission form — POSTs to /api/submit-agency
+    │   ├── api/
+    │   │   └── submit-agency.ts  # serverless POST endpoint → creates Sanity `submission` doc
     │   └── 404.astro      # branded not-found page
     ├── styles/
     │   └── gallery-system.css  # copied from stoyanov-works-website/shared-styles
@@ -117,7 +136,7 @@ Reference via `var(--token)` — don't hard-code colors or font stacks.
 
 ## Conventions
 
-- **Astro static, all data fetched at build.** Sanity client uses CDN (`useCdn: true`). To pick up new content, redeploy.
+- **Astro mixed (mostly static).** Pages set `export const prerender = true` and build to HTML at deploy time, fetching Sanity over CDN (`useCdn: true`). Only [`/api/submit-agency`](src/pages/api/submit-agency.ts) runs as a Vercel serverless function — needed to hold the Sanity write token server-side. To pick up new agency content, redeploy. To pick up form submissions, no redeploy needed (server endpoint reads `SANITY_WRITE_TOKEN` at request time).
 - **Site language is Bulgarian (`<html lang="bg">`).** All UI copy is in Cyrillic. Don't translate to English without being asked.
 - **GROQ queries live in `src/lib/sanity.ts`** as exported async functions. Pages call them in frontmatter — don't fetch from inline scripts.
 - **Image source: native Sanity image assets.** Query via `image{ asset->{ url } }`. There is a legacy `imageUrl` fallback in `Agency` type and index.astro for safety, but new agencies should use `image` only — the migration in `migrate-images.mjs` already converted existing docs.
@@ -151,6 +170,26 @@ If a content edit doesn't show up:
 - Check Vercel deployments — the auto-fired one is labeled "Deploy Hook".
 - Drafts don't trigger webhooks (by design); only published changes do.
 
+## Submission workflow
+
+Visitors submit new agencies at `/submit`. Flow:
+
+1. Form POSTs JSON to `/api/submit-agency` (Vercel serverless function).
+2. Endpoint validates fields, checks honeypot, then creates a Sanity `submission` doc with status `pending`.
+3. Yordan reviews pending submissions at https://bda-studio.sanity.studio — the "Предложение" doctype.
+4. To accept: create a new `agency` doc using the submitted info (currently manual; future subagent automates this — see Up next #8). Mark the submission `approved`.
+5. To reject: mark the submission `rejected` (no email sent — submitters get no automatic feedback).
+
+The `submission` schema is intentionally separate from `agency` so junk submissions never appear on the public site.
+
+**Required env var:** `SANITY_WRITE_TOKEN` — Sanity API token with Editor permissions.
+- Create at https://www.sanity.io/manage/project/dq09sslz → API → Tokens → "Add API token", name "BDA submit form", role "Editor".
+- Add to Vercel: project settings → Environment Variables → key `SANITY_WRITE_TOKEN`, scope Production (and Preview if you want preview deploys to accept submissions).
+- Optional `.env` locally for dev testing — same key, never committed (`.env` is gitignored).
+- Without it, the endpoint returns 500 "Server misconfigured" — form shows a generic error.
+
+**Spam protection:** hidden honeypot field `_gotcha`. Bots fill all visible inputs; if `_gotcha` is non-empty the endpoint silently returns 200 without creating a doc. No third-party (no Turnstile/hCaptcha) — keep an eye on submission volume; add one if junk piles up.
+
 ## Maintenance
 
 The site is fully static and effectively zero-maintenance. Things that genuinely require periodic attention:
@@ -182,7 +221,7 @@ Open improvement items, ordered by impact (last audited 2026-05-01, after the de
 
 1. **Image performance.** Sanity image URLs are emitted raw — full-resolution originals (some 3000+px wide) downloaded for ~280px thumbs. Add `?w=560&auto=format&fit=max` query params at the GROQ/template layer.
 2. **Image dimensions on `<img>`.** Sanity asset has `metadata.dimensions.width`/`height` — query and emit to kill CLS.
-3. **Submit form is a no-op.** [src/pages/submit.astro](src/pages/submit.astro) only does `console.log`. Wire to Resend / Formspree / Sanity write API.
+3. ~~**Submit form is a no-op.**~~ ✅ Wired to Sanity. Form posts to `/api/submit-agency` which creates a `submission` doc — see Submission workflow above.
 4. **Remove legacy `imageUrl` fallback.** Sanity audit on 2026-05-01 confirmed 0/81 docs use it — safe to delete from `Agency` interface, GROQ query, and template.
 5. **Per-page meta description + OG/Twitter card.** Currently every page shares one Bulgarian description; sharing a URL produces a blank preview.
 6. **Agency detail pages.** `/agency/[slug]` doesn't exist — `description` field is never rendered, slug is unused, and there's no indexable content per agency.
@@ -192,7 +231,7 @@ Open improvement items, ordered by impact (last audited 2026-05-01, after the de
 
 ## Known traps
 
-- **The submit form doesn't submit anywhere.** `src/pages/submit.astro` `form.addEventListener` does `console.log(entries)` and shows a success message. No backend is wired up. Don't claim "submission works" until a real handler (Sanity write API, Formspree, Resend, etc.) is connected.
+- **Submit form depends on `SANITY_WRITE_TOKEN`.** The form POSTs to a serverless function that needs the env var set in Vercel — without it, every submission returns 500. If a user reports the form is broken, first check Vercel project env vars → `SANITY_WRITE_TOKEN` is present in the Production scope.
 - **Agency `imageUrl` is legacy.** Still in the `Agency` interface and the `index.astro` template falls back to it. As of 2026-05-01 a Sanity audit confirmed 0 of 81 agencies use `imageUrl` — the fallback is safe to remove (type, GROQ, template).
 - **`useCdn: true` means new Sanity content can lag a minute or two** before showing on the next build. Not a bug.
 - **No env file template.** `scripts/migrate-images.mjs` requires `SANITY_TOKEN` (Editor permissions) but the runtime client uses no token. Don't add a token to the runtime client unless writes from the site are intended.
