@@ -4,6 +4,25 @@ Newest entries on top. Each session: what changed, why, what's next.
 
 ---
 
+## 2026-10-19 - Vercel Web Analytics added (visitor tracking)
+
+**Focus:** Track visitors on bda.stoyanov.works. Part of a cross-project analytics pass (6 sites now tracked).
+
+**Done:**
+
+- Switched Web Analytics on for the `bda-site` Vercel project (it was never on before).
+- Added the tracking script: `@vercel/analytics` (^2.0.1) in `client/package.json`, and `<Analytics />` from `@vercel/analytics/astro` in the `<head>` of `client/src/layouts/Base.astro`, the only page shell, so every page is covered.
+- Tested on a branch preview first, then pushed to `main` (commit `2ac8ac1`). Live build green.
+- Local copy pulled and `npm install` run, so `npm run dev` works.
+
+**Decisions:** Vercel Web Analytics over Google Analytics: no cookies, so no consent banner needed, and it's included in Vercel Pro.
+
+**Next / open:**
+- Not yet proven end to end: open https://bda.stoyanov.works once in a real browser, then check that visits show in the Vercel project's Analytics tab.
+- Visits count on production only. Preview links are not counted.
+
+---
+
 ## 2026-07-07 - Migrated off Dropbox to ~/Projects, restructured to client/ + _internal/, deployed live
 
 **Focus:** Move this repo out of Dropbox into `~/Projects/bda-site` and reshape to the standard template, including the nested Sanity studio.
