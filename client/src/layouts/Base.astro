@@ -1,4 +1,5 @@
 ---
+import Analytics from '@vercel/analytics/astro';
 import '../styles/gallery-system.css';
 
 interface Props {
@@ -20,6 +21,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <Analytics />
   <style is:global>
     *, *::before, *::after {
       margin: 0;
